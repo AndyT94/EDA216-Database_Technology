@@ -34,6 +34,7 @@ CREATE TABLE reservations (
   username              VARCHAR(15),
   movie_name            TEXT,
   date                  DATE,
+--  primary key (movie_name, date),
   foreign key (movie_name, date) references performances(name, date),
   foreign key (username) references users(username)
 );
@@ -106,8 +107,7 @@ INSERT INTO movies (name) VALUES
 
 INSERT INTO performances (name, date, theater_name, available_seats) VALUES
 ('La La Land', '2017-02-01', 'Royal', 496),
-('La La Land', '2017-02-02', 'Filmstaden Storgatan', 63),
-('Jätten', '2017-02-02', 'Filmstaden Storgatan', 63);
+('La La Land', '2017-02-02', 'Filmstaden Storgatan', 63);
 
 INSERT INTO reservations (username, movie_name, date) VALUES
 ('andy', 'La La Land', '2017-02-01'),

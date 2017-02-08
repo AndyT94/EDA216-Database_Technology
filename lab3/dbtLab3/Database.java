@@ -1,4 +1,4 @@
-package app;
+package dbtLab3;
 
 import java.sql.*;
 import java.util.*;
@@ -63,4 +63,18 @@ public class Database {
     }
 
     /* --- insert own code here --- */
+    public boolean userExists(String userId) {
+	try {
+		String sql = "SELECT username FROM users WHERE username = " + userId;
+		PreparedStatement ps = conn.prepareStatement(sql);
+		ResultSet rs = ps.executeQuery();
+		return rs.next();
+	} catch (SQLException e) {
+        	e.printStackTrace();
+    	} finally {
+        	// here we should close our statement
+    	}
+	return false;
+    }
+
 }
