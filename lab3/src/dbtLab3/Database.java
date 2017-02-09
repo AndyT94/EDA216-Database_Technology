@@ -64,8 +64,9 @@ public class Database {
 
 	public boolean userExists(String userId) {
 		try {
-			String sql = "SELECT * FROM users WHERE username = '" + userId + "'";
+			String sql = "SELECT * FROM users WHERE username = ?";
 			PreparedStatement ps = conn.prepareStatement(sql);
+			ps.setString(1, userId);
 			ResultSet rs = ps.executeQuery();
 			return rs.next();
 		} catch (SQLException e) {
@@ -93,9 +94,9 @@ public class Database {
 	public ArrayList<String> getDates(String movieName) {
 		ArrayList<String> dates = new ArrayList<String>();
 		try {
-			String movie = movieName.replace("'", "''");
-			String sql = "SELECT date FROM performances WHERE name = '" + movie + "'";
+			String sql = "SELECT date FROM performances WHERE name = ?";
 			PreparedStatement ps = conn.prepareStatement(sql);
+			ps.setString(1, movieName);
 			ResultSet rs = ps.executeQuery();
 			while (rs.next()) {
 				dates.add(rs.getString("date"));
@@ -109,9 +110,10 @@ public class Database {
 
 	public Performance getPerformance(String movieName, String date) {
 		try {
-			String movie = movieName.replace("'", "''");
-			String sql = "SELECT * FROM performances WHERE name = '" + movie + "' AND date = '" + date + "'";
+			String sql = "SELECT * FROM performances WHERE name = ? AND date = ?";
 			PreparedStatement ps = conn.prepareStatement(sql);
+			ps.setString(1, movieName);
+			ps.setString(2, date);
 			ResultSet rs = ps.executeQuery();
 			return new Performance(rs);
 		} catch (SQLException e) {
@@ -122,25 +124,37 @@ public class Database {
 
 	public boolean makeReservation(String movieName, String date) {
 		try {
-			String movie = movieName.replace("'", "''");
-			String sql = "SELECT available_seats FROM performances WHERE name = '" + movie + "' AND date = '" + date
-					+ "'";
+			conn.setAutoCommit(false);
+			
+			String sql = "SELECT available_seats FROM performances WHERE name = ? AND date = ?";
 			PreparedStatement ps = conn.prepareStatement(sql);
+			ps.setString(1, movieName);
+			ps.setString(2, date);
 			ResultSet rs = ps.executeQuery();
 
 			int seats = rs.getInt("available_seats");
 			if (seats > 0) {
-				sql = "UPDATE performances SET available_seats = " + (seats - 1) + " WHERE name = '" + movie
-						+ "' AND date = '" + date + "'";
+				sql = "UPDATE performances SET available_seats = ? WHERE name = ? AND date = ?";
 				ps = conn.prepareStatement(sql);
+				ps.setInt(1, seats - 1);
+				ps.setString(2, movieName);
+				ps.setString(3, date);
 				ps.executeUpdate();
 
-				sql = "INSERT INTO reservations (username, movie_name, date) VALUES ('"
-						+ CurrentUser.instance().getCurrentUserId() + "', '" + movie + "', '" + date + "')";
+				sql = "INSERT INTO reservations (username, movie_name, date) VALUES (?, ?, ?)";
 				ps = conn.prepareStatement(sql);
+				ps.setString(1, CurrentUser.instance().getCurrentUserId());
+				ps.setString(2, movieName);
+				ps.setString(3, date);
 				ps.executeUpdate();
+				
+				conn.commit();
 				return true;
+			} else {
+				conn.rollback();
 			}
+			
+			conn.setAutoCommit(true);
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
